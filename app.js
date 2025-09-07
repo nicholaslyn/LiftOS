@@ -14,21 +14,31 @@
   };
 
   const STARTER_PROGRAM = {
-    days: [
-      { name: "Upper", exercises: [
-        { name: "Bench Press", type: "main" },
-        { name: "Barbell Row", type: "main" },
-        { name: "Incline DB Press", type: "accessory" },
-        { name: "Lateral Raise", type: "accessory" },
-      ]},
-      { name: "Lower", exercises: [
-        { name: "Back Squat", type: "main" },
-        { name: "Romanian Deadlift", type: "main" },
-        { name: "Leg Press", type: "accessory" },
-        { name: "Calf Raise", type: "accessory" },
-      ]},
-    ]
-  };
+  days: [
+    { name: "Push", exercises: [
+      { name: "Bench Press", "type": "main" },
+      { name: "Overhead Press", "type": "main" },
+      { name: "Incline DB Press", "type": "accessory" },
+      { name: "Lateral Raise", "type": "accessory" },
+      { name: "Cable Triceps Pushdown", "type": "accessory" },
+    ]},
+    { name: "Pull", exercises: [
+      { name: "Barbell Row", "type": "main" },
+      { name: "Lat Pulldown", "type": "main" },
+      { name: "Seated Cable Row", "type": "accessory" },
+      { name: "Face Pull", "type": "accessory" },
+      { name: "DB Biceps Curl", "type": "accessory" },
+    ]},
+    { name: "Legs", exercises: [
+      { name: "Back Squat", "type": "main" },
+      { name: "Romanian Deadlift", "type": "main" },
+      { name: "Leg Press", "type": "accessory" },
+      { name: "Leg Curl", "type": "accessory" },
+      { name: "Standing Calf Raise", "type": "accessory" },
+    ]},
+  ]
+};
+
 
   // state
   let settings = load(KEY_SETTINGS) || { ...DEFAULT_SETTINGS };
