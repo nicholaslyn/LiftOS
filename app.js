@@ -1,0 +1,448 @@
+const KEY_SETS = "lo_sets_v1";
+const KEY_SETTINGS = "lo_settings_v1";
+const KEY_PROGRAM = "lo_program_v1";
+const KEY_BESTS = "lo_bests_v1";
+
+const DEFAULT_SETTINGS = {
+  unit: "kg",
+  rest: { main: 180, accessory: 90 },
+  bar: 20,
+  plates: [25, 20, 15, 10, 5, 2.5, 1.25] // per side
+};
+
+const STARTER_PROGRAM = {
+  days: [
+    {
+      name: "Upper",
+      exercises: [
+        { name: "Bench Press", type: "main" },
+        { name: "Barbell Row", type: "main" },
+        { name: "Incline DB Press", type: "accessory" },
+        { name: "Lateral Raise", type: "accessory" }
+      ]
+    },
+    {
+      name: "Lower",
+      exercises: [
+        { name: "Back Squat", type: "main" },
+        { name: "Romanian Deadlift", type: "main" },
+        { name: "Leg Press", type: "accessory" },
+        { name: "Calf Raise", type: "accessory" }
+      ]
+    }
+  ]
+};
+
+let settings = load(KEY_SETTINGS) || DEFAULT_SETTINGS;
+let program = load(KEY_PROGRAM) || STARTER_PROGRAM;
+let sets = load(KEY_SETS) || [];   // {id,dateISO,day,exercise,weight,reps,rpe,unit,type}
+let bests = load(KEY_BESTS) || {}; // per exercise: { e1RM: number, repsPR: number }
+
+/* ------------------ DOM ------------------ */
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+const yearEl = $("#year");
+if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+
+$$(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    $$(".tab").forEach(b=>b.classList.remove("active"));
+    $$(".panel").forEach(p=>p.classList.remove("show"));
+    btn.classList.add("active");
+    $("#"+btn.dataset.tab).classList.add("show");
+    // refresh sections as needed
+    if (btn.dataset.tab === "log") renderLog();
+    if (btn.dataset.tab === "history") renderHistory();
+    if (btn.dataset.tab === "tools") initToolsDefaults();
+    if (btn.dataset.tab === "settings") renderSettings();
+  });
+});
+
+const daySelect = $("#daySelect");
+const startSessionBtn = $("#startSession");
+const clearTodayBtn = $("#clearToday");
+const exerciseWrap = $("#exerciseWrap");
+const noProgram = $("#noProgram");
+
+function populateDays(){
+  if (!program?.days?.length){ noProgram.style.display="block"; return; }
+  noProgram.style.display="none";
+  daySelect.innerHTML = program.days.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join("");
+}
+populateDays();
+
+function startSession(){
+  const idx = parseInt(daySelect.value || "0", 10);
+  const day = program.days[idx];
+  if (!day) return;
+  exerciseWrap.innerHTML = day.exercises.map(ex => exCardHTML(day.name, ex.name, ex.type)).join("");
+  // bind save buttons
+  exerciseWrap.querySelectorAll(".save-set").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const card = btn.closest(".ex");
+      const weight = +card.querySelector(".in-weight").value || 0;
+      const reps = +card.querySelector(".in-reps").value || 0;
+      const rpe = +card.querySelector(".in-rpe").value || 0;
+      const exercise = card.dataset.exercise;
+      const type = card.dataset.type;
+      if (weight<=0 || reps<=0) { alert("Enter weight and reps."); return; }
+      const row = {
+        id: crypto.randomUUID(),
+        dateISO: new Date().toISOString(),
+        day: day.name,
+        exercise, weight, reps, rpe,
+        unit: settings.unit,
+        type
+      };
+      sets.push(row);
+      save(KEY_SETS, sets);
+      // PR check
+      const prInfo = detectPR(exercise, weight, reps);
+      if (prInfo.isPR) tinyConfetti(card.querySelector(".title"));
+      // append to list
+      const list = card.querySelector(".set-list");
+      list.insertAdjacentHTML("afterbegin", setItemHTML(row, prInfo.e1RM));
+      // rest timer
+      startRest(type === "main" ? settings.rest.main : settings.rest.accessory);
+    });
+  });
+}
+startSessionBtn.addEventListener("click", startSession);
+clearTodayBtn.addEventListener("click", ()=>{
+  if (!confirm("Clear all sets logged today? (This removes from Log too)")) return;
+  const todayStr = new Date().toISOString().slice(0,10);
+  sets = sets.filter(s => s.dateISO.slice(0,10) !== todayStr);
+  save(KEY_SETS, sets);
+  // also clear lists on screen
+  $$(".set-list").forEach(ul => ul.innerHTML = "");
+});
+
+function exCardHTML(day, exercise, type){
+  const badge = `<span class="badge">${type==="main"?"Main lift":"Accessory"}</span>`;
+  const prBadge = `<span class="badge pr" title="Personal Records update automatically">PR watch</span>`;
+  return `
+    <article class="ex" data-exercise="${esc(exercise)}" data-type="${esc(type)}">
+      <header>
+        <div class="title"><strong>${esc(exercise)}</strong> ${badge}</div>
+        <div class="chips">${prBadge}</div>
+      </header>
+      <div class="sets">
+        <div class="set-row">
+          <input class="in-weight" type="number" inputmode="decimal" placeholder="Weight (${settings.unit})" />
+          <input class="in-reps" type="number" min="1" max="50" placeholder="Reps" />
+          <input class="in-rpe" type="number" step="0.5" min="5" max="10" placeholder="RPE (opt)" />
+          <div class="mini"><span class="chip">${esc(settings.unit)}</span></div>
+          <button class="save-set">Save Set</button>
+        </div>
+        <ul class="set-list"></ul>
+      </div>
+    </article>
+  `;
+}
+
+function setItemHTML(s, e1rm){
+  return `<li>${fmtDateTime(s.dateISO)} — <strong>${s.weight}${s.unit} × ${s.reps}</strong>${s.rpe?` @RPE ${s.rpe}`:""} · e1RM ${round1(e1rm)}${s.unit}</li>`;
+}
+
+function e1RM(weight, reps){
+  // average Epley & Brzycki for stability
+  const epley = weight * (1 + reps/30);
+  const brzycki = weight * 36 / (37 - reps);
+  return (epley + brzycki) / 2;
+}
+function detectPR(exercise, weight, reps){
+  const est = e1RM(weight, reps);
+  const b = bests[exercise] || { e1RM: 0, repsPR: 0 };
+  let isPR = false;
+  if (est > (b.e1RM || 0)) { b.e1RM = est; isPR = true; }
+  if (reps > (b.repsPR || 0) && weight >= (findTopWeight(exercise)||0)*0.98) { b.repsPR = reps; isPR = true; }
+  bests[exercise] = b; save(KEY_BESTS, bests);
+  return { isPR, e1RM: est };
+}
+function findTopWeight(ex){ // heaviest single set weight logged for this lift
+  return sets.filter(s => s.exercise===ex).reduce((m,s)=>Math.max(m,s.weight),0);
+}
+
+const restDrawer = $("#restDrawer");
+const restTimeEl = $("#restTime");
+const add15 = $("#add15");
+const add30 = $("#add30");
+const stopRestBtn = $("#stopRest");
+
+let restMs = 0, restTick = null, restEnd = 0;
+
+function startRest(seconds){
+  restMs = seconds * 1000;
+  restEnd = Date.now() + restMs;
+  showRest();
+  if (restTick) clearInterval(restTick);
+  restTick = setInterval(()=>{
+    const left = Math.max(0, restEnd - Date.now());
+    restTimeEl.textContent = fmtMMSS(left);
+    if (left === 0){ clearInterval(restTick); ding(); }
+  }, 200);
+}
+function showRest(){ restDrawer.classList.add("show"); restTimeEl.textContent = fmtMMSS(restMs); }
+function hideRest(){ restDrawer.classList.remove("show"); if (restTick) clearInterval(restTick); }
+add15.addEventListener("click", ()=>{ restEnd += 15000; });
+add30.addEventListener("click", ()=>{ restEnd += 30000; });
+stopRestBtn.addEventListener("click", hideRest);
+
+function ding(){ try{
+  const ctx = new (window.AudioContext||window.webkitAudioContext)();
+  const o = ctx.createOscillator(); const g = ctx.createGain();
+  o.type="sine"; o.frequency.value=880; o.connect(g); g.connect(ctx.destination);
+  o.start(); setTimeout(()=>{ o.stop(); ctx.close(); }, 250);
+}catch{} }
+
+const filterLift = $("#filterLift");
+const fromDate = $("#fromDate");
+const toDate = $("#toDate");
+const applyFilters = $("#applyFilters");
+const clearFilters = $("#clearFilters");
+const exportCsv = $("#exportCsv");
+const logBody = $("#logBody");
+
+function renderLog(){
+  // populate exercise filter
+  const lifts = Array.from(new Set(sets.map(s=>s.exercise))).sort();
+  filterLift.innerHTML = `<option value="">All exercises</option>` + lifts.map(l=>`<option>${esc(l)}</option>`).join("");
+  // render rows
+  drawLog();
+}
+applyFilters.addEventListener("click", drawLog);
+clearFilters.addEventListener("click", ()=>{
+  filterLift.value=""; fromDate.value=""; toDate.value=""; drawLog();
+});
+exportCsv.addEventListener("click", ()=>{
+  const rows = currentLogRows();
+  const csv = ["date,exercise,weight,reps,rpe,unit,e1rm"].concat(
+    rows.map(r=>[r.dateISO, r.exercise, r.weight, r.reps, r.rpe||"", r.unit, round1(e1RM(r.weight,r.reps))].map(csvCell).join(","))
+  ).join("\n");
+  downloadText(csv, "liftos-log.csv", "text/csv");
+});
+
+function currentLogRows(){
+  const lf = filterLift.value;
+  const f = fromDate.value ? new Date(fromDate.value) : null;
+  const t = toDate.value ? new Date(toDate.value) : null;
+  return sets.filter(s=>{
+    if (lf && s.exercise!==lf) return false;
+    const d = new Date(s.dateISO);
+    if (f && d < new Date(f.toDateString())) return false;
+    if (t && d > new Date(new Date(t.toDateString()).getTime()+86399000)) return false;
+    return true;
+  }).sort((a,b)=> b.dateISO.localeCompare(a.dateISO));
+}
+function drawLog(){
+  const rows = currentLogRows();
+  logBody.innerHTML = rows.map(s=>`
+    <tr>
+      <td>${fmtDateTime(s.dateISO)}</td>
+      <td>${esc(s.exercise)}</td>
+      <td>${s.weight} ${s.unit}</td>
+      <td>${s.reps}</td>
+      <td>${s.rpe||""}</td>
+      <td>${round1(e1RM(s.weight,s.reps))} ${s.unit}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="6" class="muted">No sets yet.</td></tr>`;
+}
+
+const trendWrap = $("#trendWrap");
+const volumeBars = $("#volumeBars");
+
+function renderHistory(){
+  // PR / 1RM trend per main lifts
+  const mains = program.days.flatMap(d => d.exercises.filter(e=>e.type==="main").map(e=>e.name));
+  const uniq = Array.from(new Set(mains));
+  trendWrap.innerHTML = uniq.map(lift => trendCard(lift)).join("") || `<p class="muted">Add sets to see trends.</p>`;
+
+  // Weekly volume last 6 weeks
+  const vols = weeklyVolume(6);
+  const max = Math.max(1, ...vols.map(v=>v.total));
+  volumeBars.innerHTML = vols.map(v=>`
+    <div class="bar">
+      <div style="width:120px">${esc(v.week)}</div>
+      <div class="meter"><div class="fill" style="width:${Math.round(v.total/max*100)}%"></div></div>
+      <div style="width:90px;text-align:right">${Math.round(v.total)} ${esc(settings.unit)}·reps</div>
+    </div>
+  `).join("");
+}
+function trendCard(lift){
+  const points = lastNBestE1RM(lift, 8); // last 8 bests
+  const max = Math.max(1, ...points.map(p=>p.e1rm));
+  const bars = points.map(p=>`
+    <div class="bar">
+      <div style="width:120px">${esc(p.label)}</div>
+      <div class="meter"><div class="fill" style="width:${Math.round(p.e1rm/max*100)}%"></div></div>
+      <div style="width:90px;text-align:right">${p.e1rm?round1(p.e1rm):"-"} ${esc(settings.unit)}</div>
+    </div>
+  `).join("");
+  return `<div class="card"><h3>${esc(lift)} — e1RM</h3>${bars || '<p class="muted">No data yet.</p>'}</div>`;
+}
+function lastNBestE1RM(lift, n){
+  // group by week (ISO week label)
+  const map = {};
+  sets.filter(s=>s.exercise===lift).forEach(s=>{
+    const label = weekLabel(new Date(s.dateISO));
+    const e = e1RM(s.weight, s.reps);
+    map[label] = Math.max(map[label]||0, e);
+  });
+  const arr = Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0])).slice(-n)
+                .map(([label,e1rm])=>({label, e1rm: Math.round(e1rm)}));
+  return arr;
+}
+function weeklyVolume(nWeeks){
+  const now = new Date();
+  const arr = [];
+  for (let i=nWeeks-1;i>=0;i--){
+    const d = new Date(now); d.setDate(now.getDate() - i*7);
+    const label = weekLabel(d);
+    const total = sets.filter(s=>weekLabel(new Date(s.dateISO))===label)
+      .reduce((sum,s)=> sum + s.weight * s.reps, 0);
+    arr.push({ week: label, total });
+  }
+  return arr;
+}
+
+const wuTarget = $("#wuTarget");
+const wuReps = $("#wuReps");
+const makeWarmupBtn = $("#makeWarmup");
+const warmupList = $("#warmupList");
+
+const pvTarget = $("#pvTarget");
+const pvBar = $("#pvBar");
+const calcPlatesBtn = $("#calcPlates");
+const platesOut = $("#platesOut");
+
+const rmWeight = $("#rmWeight");
+const rmReps = $("#rmReps");
+const calcRmBtn = $("#calcRm");
+const rmOut = $("#rmOut");
+
+function initToolsDefaults(){
+  pvBar.value = settings.bar;
+}
+makeWarmupBtn.addEventListener("click", ()=>{
+  const t = +wuTarget.value || 0;
+  const reps = +wuReps.value || 5;
+  if (!t){ alert("Enter target set weight."); return; }
+  // Simple ramp: 40%, 55%, 70%, 80%, 90% (adjusted to plate math)
+  const perc = [0.4, 0.55, 0.7, 0.8, 0.9, 1.0];
+  const repsSeq = [5, 3, 3, 2, 1, reps];
+  warmupList.innerHTML = perc.map((p,i)=>{
+    const w = roundToPlateable(t*p);
+    const plan = platePlan(w);
+    return `<li>${w} ${esc(settings.unit)} × ${repsSeq[i]} — <span class="line">${plan.html}</span></li>`;
+  }).join("");
+});
+calcPlatesBtn.addEventListener("click", ()=>{
+  const t = +pvTarget.value || 0;
+  const bar = +pvBar.value || settings.bar;
+  if (!t){ alert("Enter target weight."); return; }
+  const plan = platePlan(t, bar);
+  platesOut.innerHTML = plan.html || `<p class="muted">Cannot match weight with current plates.</p>`;
+});
+calcRmBtn.addEventListener("click", ()=>{
+  const w = +rmWeight.value || 0;
+  const r = +rmReps.value || 1;
+  if (!w || !r){ rmOut.textContent="Enter weight and reps."; return; }
+  rmOut.textContent = `Epley: ${round1(w*(1+r/30))} ${settings.unit} · Brzycki: ${round1(w*36/(37-r))} ${settings.unit}`;
+});
+
+function platePlan(target, barWeight = settings.bar){
+  // target total on bar; per side = (target - bar)/2
+  const per = (target - barWeight) / 2;
+  if (per < 0) return { html: `<span class="muted">Target &lt; bar</span>` };
+  let remain = per;
+  const used = [];
+  const avail = [...settings.plates].sort((a,b)=>b-a);
+  for (const p of avail){
+    let count = 0;
+    while (remain + 1e-6 >= p){
+      remain = round2(remain - p);
+      count++;
+    }
+    if (count) used.push({p, count});
+  }
+  const matched = Math.abs(remain) < 0.01;
+  const html = `
+    <div class="line">
+      <span class="plate small">Bar ${barWeight}${settings.unit}</span>
+      ${used.map(u=>`<span class="plate">${u.p}${settings.unit} × ${u.count} / side</span>`).join("")}
+      ${matched? "": `<span class="muted">(≈ off by ${round2(remain)}${settings.unit} per side)</span>`}
+    </div>
+  `;
+  return { html };
+}
+function roundToPlateable(x){
+  // Round to nearest 0.5 (kg) or 1 (lb) to better match plates
+  return settings.unit==="kg" ? Math.round(x*2)/2 : Math.round(x);
+}
+
+const unitSel = $("#unitSel");
+const restMain = $("#restMain");
+const restAcc = $("#restAcc");
+const saveSettingsBtn = $("#saveSettings");
+
+const barWeight = $("#barWeight");
+const plateChecks = $("#plateChecks");
+const savePlatesBtn = $("#savePlates");
+
+const programJson = $("#programJson");
+const saveProgramBtn = $("#saveProgram");
+const resetProgramBtn = $("#resetProgram");
+
+function renderSettings(){
+  // Units & rest
+  unitSel.value = settings.unit;
+  restMain.value = settings.rest.main;
+  restAcc.value = settings.rest.accessory;
+  // Bar & plates
+  barWeight.value = settings.bar;
+  plateChecks.innerHTML = DEFAULT_SETTINGS.plates.map(p=>{
+    const on = settings.plates.includes(p);
+    return `<label class="chip"><input type="checkbox" value="${p}" ${on?"checked":""}/> ${p}${esc(settings.unit)}</label>`;
+  }).join("");
+  // Program JSON
+  programJson.value = JSON.stringify(program, null, 2);
+}
+saveSettingsBtn.addEventListener("click", ()=>{
+  settings.unit = unitSel.value;
+  settings.rest.main = +restMain.value || 180;
+  settings.rest.accessory = +restAcc.value || 90;
+  save(KEY_SETTINGS, settings);
+  alert("Settings saved.");
+});
+savePlatesBtn.addEventListener("click", ()=>{
+  settings.bar = +barWeight.value || settings.bar;
+  const vals = Array.from(plateChecks.querySelectorAll("input[type=checkbox]:checked")).map(i=>+i.value);
+  settings.plates = vals.sort((a,b)=>b-a);
+  save(KEY_SETTINGS, settings);
+  alert("Bar & plates saved.");
+});
+saveProgramBtn.addEventListener("click", ()=>{
+  try{
+    const obj = JSON.parse(programJson.value);
+    if (!obj.days || !Array.isArray(obj.days)) throw new Error("Program must have a 'days' array.");
+    program = obj; save(KEY_PROGRAM, program); populateDays(); alert("Program saved.");
+  }catch(e){ alert("Invalid JSON: " + e.message); }
+});
+resetProgramBtn.addEventListener("click", ()=>{
+  if (!confirm("Reset program to the starter template?")) return;
+  program = STARTER_PROGRAM; save(KEY_PROGRAM, program); renderSettings(); populateDays(); alert("Reset.");
+});
+
+function load(k){ try{ return JSON.parse(localStorage.getItem(k)||"null"); }catch{ return null; } }
+function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function csvCell(v){ return `"${String(v).replace(/"/g,'""')}"`; }
+function downloadText(text, name, type="text/plain"){
+  const blob = new Blob([text], {type}); const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href);
+}
+function fmtDateTime(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined,{month:"short",day:"2-digit"}) + " " + d.to
