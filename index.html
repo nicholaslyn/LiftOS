@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Log sets fast with auto rest timer, warm-up wizard, and plate math. Local-first." />
   <link rel="stylesheet" href="./style.css" />
+  <script src="./app.js" defer></script>
 </head>
 <body>
   <div class="app">
@@ -26,8 +27,7 @@
       <section id="today" class="panel show">
         <header class="head">
           <div class="row">
-            <label class="field">
-              <span>Program Day</span>
+            <label class="field"><span>Program Day</span>
               <select id="daySelect"></select>
             </label>
           </div>
@@ -44,18 +44,11 @@
       <section id="log" class="panel">
         <header class="head">
           <div class="row">
-            <label class="field">
-              <span>Exercise</span>
+            <label class="field"><span>Exercise</span>
               <select id="filterLift"></select>
             </label>
-            <label class="field">
-              <span>From</span>
-              <input id="fromDate" type="date" />
-            </label>
-            <label class="field">
-              <span>To</span>
-              <input id="toDate" type="date" />
-            </label>
+            <label class="field"><span>From</span><input id="fromDate" type="date" /></label>
+            <label class="field"><span>To</span><input id="toDate" type="date" /></label>
           </div>
           <div class="row">
             <button type="button" id="applyFilters" class="btn ghost">Apply</button>
@@ -65,9 +58,7 @@
         </header>
         <div class="table-wrap">
           <table class="table">
-            <thead><tr>
-              <th>Date</th><th>Exercise</th><th>Weight</th><th>Reps</th><th>RPE</th><th>e1RM</th>
-            </tr></thead>
+            <thead><tr><th>Date</th><th>Exercise</th><th>Weight</th><th>Reps</th><th>RPE</th><th>e1RM</th></tr></thead>
             <tbody id="logBody"></tbody>
           </table>
         </div>
@@ -154,7 +145,7 @@
     </main>
   </div>
 
-  <!-- REST TIMER (sticky bottom) -->
+  <!-- REST TIMER -->
   <div id="restDrawer" class="rest">
     <div class="rest-inner">
       <strong>Rest</strong>
@@ -166,8 +157,5 @@
       </div>
     </div>
   </div>
-
-  <script src="./app.js"></script>
 </body>
 </html>
-
