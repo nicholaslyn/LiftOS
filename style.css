@@ -16,8 +16,14 @@ html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial}
 .hide{display:none}
 
-.app{display:grid;grid-template-columns:260px 1fr;min-height:100dvh}
-.sidebar{position:sticky;top:0;height:100dvh;padding:18px;background:linear-gradient(180deg,#0e1318,#0b0e12 60%);border-right:1px solid var(--line)}
+/* new */
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100svh}
+.sidebar{position:sticky;top:0;height:100svh;padding:18px;background:linear-gradient(180deg,#0e1318,#0b0e12 60%);border-right:1px solid var(--line)}
+/* Fallback for older browsers */
+@supports not (height: 100svh){
+  .app{min-height:100vh}
+  .sidebar{height:100vh}
+}
 .brand{font-weight:800;letter-spacing:.6px;font-size:22px;margin-bottom:16px}
 .nav{display:grid;gap:8px}
 .nav-btn{text-align:left;padding:10px 12px;border-radius:12px;background:var(--chip);border:1px solid var(--line);color:var(--ink);cursor:pointer}
@@ -97,5 +103,67 @@ textarea.program{min-height:220px;resize:vertical}
 }
 .rest-actions{display:flex;gap:10px}
 #restTime{font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+/* --- Mobile layout (phones) --- */
+@media (max-width: 780px){
+  /* Layout: sidebar becomes a sticky top bar */
+  .app{grid-template-columns:1fr}
+  .sidebar{
+    position:sticky; top:0; height:auto; z-index:10;
+    padding:10px 12px; border-right:none; border-bottom:1px solid var(--line);
+    display:grid; grid-template-columns:auto 1fr; align-items:center; gap:12px;
+    background:linear-gradient(180deg,#0e1318,#0b0e12 60%);
+  }
+  .brand{margin:0}
+  .nav{
+    display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+    padding-bottom:4px;
+  }
+  .nav::-webkit-scrollbar{display:none}
+  .nav-btn{flex:0 0 auto; white-space:nowrap; padding:8px 10px}
+  .nav-btn.active{outline-width:2px}
+  .side-foot{display:none}
+
+  /* Content spacing */
+  .content{padding:12px}
+  .panel{margin:12px 0; padding:12px}
+
+  /* “Save Set” row: from 5 cramped columns → stacked 2-column grid */
+  .set-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    grid-template-areas:
+      "weight reps"
+      "rpe    chip"
+      "btn    btn";
+  }
+  .set-row .in-weight{grid-area:weight}
+  .set-row .in-reps{grid-area:reps}
+  .set-row .in-rpe{grid-area:rpe}
+  .set-row .chip{grid-area:chip; justify-self:start}
+  .set-row .save-set{grid-area:btn}
+
+  /* Cards & grids */
+  .tools-grid,.grid-3{grid-template-columns:1fr}
+  .grid-2{grid-template-columns:1fr 1fr}
+
+  /* Tables: keep easy horizontal scroll without squishing */
+  .table-wrap{overflow:auto; margin:0 -12px; padding:0 12px}
+
+  /* Rest drawer: respect iOS safe area */
+  .rest-inner{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+}
+
+/* Slightly larger phones / phablets: avoid 3-column tools */
+@media (max-width:980px){
+  .tools-grid,.grid-3{grid-template-columns:1fr 1fr}
+}
+@media (max-width:680px){
+  .tools-grid,.grid-3,.grid-2{grid-template-columns:1fr}
+}
+
+/* Touch niceties */
+button,input,select,textarea{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
 
 
