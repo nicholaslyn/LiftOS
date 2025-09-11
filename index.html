@@ -11,10 +11,34 @@
 <body>
   <div class="app">
     <aside class="sidebar">
-      <div class="brand">
-        <img src="./assets/liftos-logo.svg" class="logo-mark" alt="LiftOS logo">
-        <span class="wordmark">LiftOS</span>
-      </div>
+      <!-- Replace your old brand div with this -->
+<div class="brand">
+  <!-- inline logo: no file path, will ALWAYS render -->
+  <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true">
+    <defs>
+      <linearGradient id="lo-g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#f59e0b"/>
+        <stop offset="100%" stop-color="#38bdf8"/>
+      </linearGradient>
+    </defs>
+    <!-- plate ring -->
+    <circle cx="128" cy="128" r="92" fill="none" stroke="url(#lo-g)" stroke-width="16" stroke-linecap="round"/>
+    <!-- inner ring accent -->
+    <circle cx="128" cy="128" r="58" fill="none" stroke="#1a222c" stroke-width="4" opacity=".9"/>
+    <!-- progress arrow -->
+    <g stroke-linecap="round" stroke-linejoin="round">
+      <path d="M70 170 L140 100" stroke="#e8edf2" stroke-width="14"/>
+      <path d="M140 100 L178 100 L178 138" fill="none" stroke="#38bdf8" stroke-width="14"/>
+    </g>
+    <!-- small plate notches -->
+    <g fill="#0b0e12" opacity=".95">
+      <rect x="120" y="18"  width="16" height="20" rx="3"/>
+      <rect x="120" y="218" width="16" height="20" rx="3"/>
+    </g>
+  </svg>
+  <span class="wordmark">LiftOS</span>
+</div>
+
       <nav class="nav">
         <button type="button" class="nav-btn active" data-tab="today">Today</button>
         <button type="button" class="nav-btn" data-tab="log">Log</button>
