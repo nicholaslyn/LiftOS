@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="t d">
+  <title id="t">LiftOS</title>
+  <desc id="d">Minimal circular weight-plate ring with a diagonal progress arrow in brand gradient.</desc>
+  <defs>
+    <!-- Brand gradient: gold to cyan -->
+    <linearGradient id="loGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <!-- Shadow filter for subtle depth on dark UI -->
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+    <!-- Plate notch shape -->
+    <clipPath id="plateNotches">
+      <rect x="0" y="0" width="256" height="256" rx="24" ry="24"/>
+      <!-- subtract small top/bottom windows by re-adding later with masks if needed -->
+    </clipPath>
+  </defs>
+
+  <!-- Background is transparent so it works anywhere -->
+
+  <!-- Outer plate ring -->
+  <g filter="url(#softShadow)">
+    <circle cx="128" cy="128" r="92" fill="none" stroke="url(#loGrad)" stroke-width="16" stroke-linecap="round"/>
+  </g>
+
+  <!-- Inner ring accent for depth -->
+  <circle cx="128" cy="128" r="58" fill="none" stroke="#1a222c" stroke-width="4" opacity="0.9"/>
+
+  <!-- Progress arrow (north-east) -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <!-- body of the arrow -->
+    <path d="M70 170 L140 100" stroke="#e8edf2" stroke-width="14"/>
+    <!-- arrow head -->
+    <path d="M140 100 L178 100 L178 138" fill="none" stroke="#38bdf8" stroke-width="14"/>
+  </g>
+
+  <!-- Small plate notches at 12 and 6 o'clock -->
+  <g fill="#0b0e12" opacity="0.95">
+    <rect x="120" y="18"  width="16" height="20" rx="3"/>
+    <rect x="120" y="218" width="16" height="20" rx="3"/>
+  </g>
+</svg>
