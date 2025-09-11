@@ -164,6 +164,16 @@ textarea.program{min-height:220px;resize:vertical}
 
 /* Touch niceties */
 button,input,select,textarea{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+/* Brand lockup */
+.brand{display:flex;align-items:center;gap:10px}
+.logo-mark{width:28px;height:28px;display:block}
+.brand .wordmark{font-weight:800;letter-spacing:.6px;font-size:20px}
+
+/* On phones, keep the icon to save space */
+@media (max-width:780px){
+  .brand .wordmark{display:none}
+}
+
 
 
 
