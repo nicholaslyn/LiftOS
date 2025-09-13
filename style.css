@@ -16,7 +16,6 @@ html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial}
 .hide{display:none}
 
-/* new */
 .app{display:grid;grid-template-columns:260px 1fr;min-height:100svh}
 .sidebar{position:sticky;top:0;height:100svh;padding:18px;background:linear-gradient(180deg,#0e1318,#0b0e12 60%);border-right:1px solid var(--line)}
 /* Fallback for older browsers */
@@ -123,11 +122,9 @@ textarea.program{min-height:220px;resize:vertical}
   .nav-btn.active{outline-width:2px}
   .side-foot{display:none}
 
-  /* Content spacing */
   .content{padding:12px}
   .panel{margin:12px 0; padding:12px}
 
-  /* “Save Set” row: from 5 cramped columns → stacked 2-column grid */
   .set-row{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -154,7 +151,6 @@ textarea.program{min-height:220px;resize:vertical}
   .rest-inner{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
 }
 
-/* Slightly larger phones / phablets: avoid 3-column tools */
 @media (max-width:980px){
   .tools-grid,.grid-3{grid-template-columns:1fr 1fr}
 }
@@ -162,14 +158,12 @@ textarea.program{min-height:220px;resize:vertical}
   .tools-grid,.grid-3,.grid-2{grid-template-columns:1fr}
 }
 
-/* Touch niceties */
 button,input,select,textarea{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 /* Brand lockup */
 .brand{display:flex;align-items:center;gap:10px}
 .logo-mark{width:28px;height:28px;display:block}
 .brand .wordmark{font-weight:800;letter-spacing:.6px;font-size:20px}
 
-/* On phones, keep the icon to save space */
 @media (max-width:780px){
   .brand .wordmark{display:none}
 }
