@@ -1,4 +1,3 @@
-// LiftOS — robust, no-libs, localStorage-only
 (function(){
   /* ---------- Storage & defaults ---------- */
   const KEY_SETS = "lo_sets_v1";
@@ -40,20 +39,17 @@
 };
 
 
-  // state
   let settings = load(KEY_SETTINGS) || { ...DEFAULT_SETTINGS };
   let program  = load(KEY_PROGRAM)  || { ...STARTER_PROGRAM };
   let sets     = load(KEY_SETS)     || [];   // {id,dateISO,day,exercise,weight,reps,rpe,unit,type}
   let bests    = load(KEY_BESTS)    || {};   // { [exercise]: { e1RM, repsPR } }
 
-  /* ---------- DOM helpers ---------- */
   const $  = s => document.querySelector(s);
   const $$ = s => Array.from(document.querySelectorAll(s));
   const uuid = () => (crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now()+"-"+Math.random().toString(16).slice(2));
 
   const yearEl = $("#year"); if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  /* ---------- Tabs ---------- */
   $$(".nav-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       $$(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -68,7 +64,6 @@
     });
   });
 
-  /* ---------- TODAY ---------- */
   const daySelect = $("#daySelect");
   const startSessionBtn = $("#startSession");
   const clearTodayBtn = $("#clearToday");
@@ -111,7 +106,6 @@
     exerciseWrap.innerHTML = day.exercises.map(e => exCardHTML(e.name, e.type)).join("");
   }
 
-  // delegate clicks for Save Set (so it always works)
   exerciseWrap.addEventListener("click", (ev) => {
     const btn = ev.target.closest(".save-set");
     if (!btn) return;
@@ -153,7 +147,6 @@
     $$(".set-list").forEach(ul => ul.innerHTML = "");
   });
 
-  /* ---------- PR / e1RM ---------- */
   function e1RM(weight, reps){
     const epley = weight * (1 + reps/30);
     const brzy  = weight * 36 / (37 - reps);
@@ -170,7 +163,6 @@
     return { isPR, e1RM: est };
   }
 
-  /* ---------- Rest timer ---------- */
   const restDrawer = $("#restDrawer");
   const restTimeEl = $("#restTime");
   const add15 = $("#add15"), add30 = $("#add30"), stopRestBtn = $("#stopRest");
@@ -199,7 +191,6 @@
     g.gain.value=.06; o.start(); setTimeout(()=>{o.stop();ctx.close();},250);
   }catch{} }
 
-  /* ---------- LOG ---------- */
   const filterLift = $("#filterLift");
   const fromDate = $("#fromDate"), toDate = $("#toDate");
   const applyFilters = $("#applyFilters"), clearFilters = $("#clearFilters"), exportCsv = $("#exportCsv");
@@ -245,7 +236,6 @@
     download(csv, "liftos-log.csv", "text/csv");
   });
 
-  /* ---------- HISTORY ---------- */
   const trendWrap = $("#trendWrap");
   const volumeBars = $("#volumeBars");
 
@@ -296,7 +286,6 @@
     return out;
   }
 
-  /* ---------- TOOLS ---------- */
   const wuTarget = $("#wuTarget"), wuReps = $("#wuReps"), makeWarmupBtn = $("#makeWarmup"), warmupList = $("#warmupList");
   const pvTarget = $("#pvTarget"), pvBar = $("#pvBar"), calcPlatesBtn = $("#calcPlates"), platesOut = $("#platesOut");
   const rmWeight = $("#rmWeight"), rmReps = $("#rmReps"), calcRmBtn = $("#calcRm"), rmOut = $("#rmOut");
@@ -328,7 +317,6 @@
     rmOut.textContent = `Epley: ${round1(w*(1+r/30))} ${settings.unit} · Brzycki: ${round1(w*36/(37-r))} ${settings.unit}`;
   });
 
-  // Correct plate math (greedy)
   function platePlan(target, barWeight = settings.bar){
     const perSide = (target - barWeight)/2;
     if (perSide < 0) return { html:`<span class="muted">Target &lt; bar</span>` };
@@ -355,7 +343,6 @@
   }
   function roundToPlateable(x){ return settings.unit==="kg" ? Math.round(x*2)/2 : Math.round(x); }
 
-  /* ---------- SETTINGS ---------- */
   const unitSel = $("#unitSel"), restMain = $("#restMain"), restAcc = $("#restAcc"), saveSettingsBtn = $("#saveSettings");
   const barWeight = $("#barWeight"), plateChecks = $("#plateChecks"), savePlatesBtn = $("#savePlates");
   const programJson = $("#programJson"), saveProgramBtn = $("#saveProgram"), resetProgramBtn = $("#resetProgram");
@@ -396,7 +383,6 @@
     program = STARTER_PROGRAM; save(KEY_PROGRAM, program); renderSettings(); populateDays(); alert("Reset.");
   });
 
-  /* ---------- Utils ---------- */
   function load(k){ try { return JSON.parse(localStorage.getItem(k) || "null"); } catch { return null; } }
   function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
   function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&gt;",">":"&gt;"}[c]||c)).replace(/"/g,"&quot;"); }
@@ -426,11 +412,9 @@
     }
   }
 
-  /* ---------- boot ---------- */
   populateDays();
   startSession();
   renderSettings();
-  // make Today visible by default even if someone clicks around before JS is ready
   $("#today").classList.add("show");
 })();
 
