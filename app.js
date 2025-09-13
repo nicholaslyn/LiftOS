@@ -1,5 +1,4 @@
 (function(){
-  /* ---------- Storage & defaults ---------- */
   const KEY_SETS = "lo_sets_v1";
   const KEY_SETTINGS = "lo_settings_v1";
   const KEY_PROGRAM = "lo_program_v1";
