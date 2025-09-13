@@ -1,12 +1,12 @@
 :root{
-  --bg:#0b0e12;       /* page (deep slate) */
-  --panel:#11161c;    /* panels */
-  --ink:#e8edf2;      /* text */
-  --muted:#99a1aa;    /* secondary */
-  --line:#1a222c;     /* borders */
-  --primary:#f59e0b;  /* gold */
-  --accent:#38bdf8;   /* cyan accent */
-  --danger:#ef4444;   /* red */
+  --bg:#0b0e12;      
+  --panel:#11161c;    
+  --ink:#e8edf2;      
+  --muted:#99a1aa;    
+  --line:#1a222c;    
+  --primary:#f59e0b;  
+  --accent:#38bdf8;   
+  --danger:#ef4444;  
   --chip:#0e1318;
   --shadow:0 18px 50px rgba(0,0,0,.35);
 }
@@ -140,14 +140,11 @@ textarea.program{min-height:220px;resize:vertical}
   .set-row .chip{grid-area:chip; justify-self:start}
   .set-row .save-set{grid-area:btn}
 
-  /* Cards & grids */
   .tools-grid,.grid-3{grid-template-columns:1fr}
   .grid-2{grid-template-columns:1fr 1fr}
 
-  /* Tables: keep easy horizontal scroll without squishing */
   .table-wrap{overflow:auto; margin:0 -12px; padding:0 12px}
 
-  /* Rest drawer: respect iOS safe area */
   .rest-inner{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
 }
 
