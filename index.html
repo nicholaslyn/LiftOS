@@ -1,13 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <!-- iOS home-screen icon -->
 <link rel="apple-touch-icon" sizes="180x180" href="assets/liftos-icon-180.png">
 
-<!-- PWA manifest (Android + modern browsers) -->
 <link rel="manifest" href="manifest.webmanifest">
 
-<!-- Nice chrome color and iOS title -->
+
 <meta name="theme-color" content="#0b0e12">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="LiftOS">
@@ -22,9 +20,7 @@
 <body>
   <div class="app">
     <aside class="sidebar">
-      <!-- Replace your old brand div with this -->
 <div class="brand">
-  <!-- inline logo: no file path, will ALWAYS render -->
   <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true">
     <defs>
       <linearGradient id="lo-g" x1="0" y1="0" x2="1" y2="1">
@@ -41,7 +37,6 @@
       <path d="M70 170 L140 100" stroke="#e8edf2" stroke-width="14"/>
       <path d="M140 100 L178 100 L178 138" fill="none" stroke="#38bdf8" stroke-width="14"/>
     </g>
-    <!-- small plate notches -->
     <g fill="#0b0e12" opacity=".95">
       <rect x="120" y="18"  width="16" height="20" rx="3"/>
       <rect x="120" y="218" width="16" height="20" rx="3"/>
@@ -78,7 +73,6 @@
         <p id="noProgram" class="muted hide">No program yet. Go to Settings → Program.</p>
       </section>
 
-      <!-- LOG -->
       <section id="log" class="panel">
         <header class="head">
           <div class="row">
@@ -102,7 +96,6 @@
         </div>
       </section>
 
-      <!-- HISTORY -->
       <section id="history" class="panel">
         <h2 class="panel-title">Trends</h2>
         <div id="trendWrap" class="stack"></div>
@@ -110,7 +103,6 @@
         <div id="volumeBars" class="bars"></div>
       </section>
 
-      <!-- TOOLS -->
       <section id="tools" class="panel">
         <div class="tools-grid">
           <div class="card">
@@ -146,7 +138,6 @@
         </div>
       </section>
 
-      <!-- SETTINGS -->
       <section id="settings" class="panel">
         <div class="grid-3">
           <div class="card">
@@ -183,7 +174,6 @@
     </main>
   </div>
 
-  <!-- REST TIMER -->
   <div id="restDrawer" class="rest">
     <div class="rest-inner">
       <strong>Rest</strong>
