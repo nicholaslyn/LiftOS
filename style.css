@@ -803,3 +803,226 @@ textarea.program{
     flex:1;
   }
 }
+/* --- Phone layout fixes --- */
+@media (max-width: 780px){
+  body{
+    overflow-x:hidden;
+  }
+
+  .app{
+    display:block;
+    width:100%;
+    min-height:100svh;
+  }
+
+  .sidebar{
+    position:sticky;
+    top:0;
+    height:auto;
+    width:100%;
+    z-index:20;
+    padding:10px 12px;
+    border-right:0;
+    border-bottom:1px solid var(--line);
+    display:grid;
+    grid-template-columns:auto 1fr;
+    align-items:center;
+    gap:10px;
+  }
+
+  .brand{
+    margin:0;
+    min-width:34px;
+  }
+
+  .brand .wordmark{
+    display:none;
+  }
+
+  .logo-mark{
+    width:28px;
+    height:28px;
+  }
+
+  .nav{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:4px;
+  }
+
+  .nav::-webkit-scrollbar{
+    display:none;
+  }
+
+  .nav-btn{
+    flex:0 0 auto;
+    white-space:nowrap;
+    padding:8px 10px;
+  }
+
+  .side-foot{
+    display:none;
+  }
+
+  .content{
+    width:100%;
+    max-width:100%;
+    padding:10px;
+  }
+
+  .panel{
+    width:100%;
+    max-width:100%;
+    margin:10px 0;
+    padding:12px;
+    border-radius:14px;
+  }
+
+  .head{
+    display:grid;
+    gap:12px;
+    align-items:stretch;
+  }
+
+  .row{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  .row .field,
+  .row .btn{
+    width:100%;
+  }
+
+  input,
+  select,
+  textarea,
+  button{
+    max-width:100%;
+  }
+
+  .tools-grid,
+  .settings-grid,
+  .grid-2,
+  .grid-3{
+    grid-template-columns:1fr;
+  }
+
+  .set-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    grid-template-areas:
+      "weight reps"
+      "rpe chip"
+      "btn btn";
+  }
+
+  .set-row .in-weight{
+    grid-area:weight;
+  }
+
+  .set-row .in-reps{
+    grid-area:reps;
+  }
+
+  .set-row .in-rpe{
+    grid-area:rpe;
+  }
+
+  .set-row .chip{
+    grid-area:chip;
+    justify-self:start;
+    align-self:center;
+  }
+
+  .set-row .save-set{
+    grid-area:btn;
+    width:100%;
+  }
+
+  .ex header{
+    display:grid;
+    gap:8px;
+  }
+
+  .badges{
+    justify-content:flex-start;
+  }
+
+  .table-wrap{
+    overflow-x:auto;
+    margin:0 -12px;
+    padding:0 12px;
+    border-left:0;
+    border-right:0;
+    border-radius:0;
+  }
+
+  .table{
+    min-width:760px;
+  }
+
+  .program-exercise{
+    grid-template-columns:1fr;
+  }
+
+  .program-day-head{
+    display:grid;
+    gap:10px;
+  }
+
+  .program-actions,
+  .backup-actions,
+  .right{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .btn{
+    width:100%;
+  }
+
+  .rest{
+    padding:0;
+  }
+
+  .rest-inner{
+    border-radius:12px 12px 0 0;
+    display:grid;
+    gap:10px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .rest-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+  }
+
+  .rest-actions .btn{
+    width:100%;
+    padding-left:8px;
+    padding-right:8px;
+  }
+}
+
+@media (max-width: 420px){
+  .set-row{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "weight"
+      "reps"
+      "rpe"
+      "chip"
+      "btn";
+  }
+
+  .rest-actions{
+    grid-template-columns:1fr;
+  }
+}
