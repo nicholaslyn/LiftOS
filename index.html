@@ -1,126 +1,199 @@
 <!doctype html>
 <html lang="en">
 <head>
-<link rel="apple-touch-icon" sizes="180x180" href="assets/liftos-icon-180.png">
-
-<link rel="manifest" href="manifest.webmanifest">
-
-
-<meta name="theme-color" content="#0b0e12">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="LiftOS">
-
   <meta charset="utf-8" />
+
   <title>LiftOS — Strength Logger</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Log sets fast with auto rest timer, warm-up wizard, and plate math. Local-first." />
+  <meta name="description" content="Log sets fast with auto rest timer, PR tracking, warm-up tools, plate math, and local-first workout history." />
+
+  <meta name="theme-color" content="#0b0e12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="LiftOS" />
+
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/liftos-icon-180.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="./style.css" />
+
   <script src="./app.js" defer></script>
 </head>
+
 <body>
   <div class="app">
     <aside class="sidebar">
-<div class="brand">
-  <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true">
-    <defs>
-      <linearGradient id="lo-g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#f59e0b"/>
-        <stop offset="100%" stop-color="#38bdf8"/>
-      </linearGradient>
-    </defs>
-    <!-- plate ring -->
-    <circle cx="128" cy="128" r="92" fill="none" stroke="url(#lo-g)" stroke-width="16" stroke-linecap="round"/>
-    <!-- inner ring accent -->
-    <circle cx="128" cy="128" r="58" fill="none" stroke="#1a222c" stroke-width="4" opacity=".9"/>
-    <!-- progress arrow -->
-    <g stroke-linecap="round" stroke-linejoin="round">
-      <path d="M70 170 L140 100" stroke="#e8edf2" stroke-width="14"/>
-      <path d="M140 100 L178 100 L178 138" fill="none" stroke="#38bdf8" stroke-width="14"/>
-    </g>
-    <g fill="#0b0e12" opacity=".95">
-      <rect x="120" y="18"  width="16" height="20" rx="3"/>
-      <rect x="120" y="218" width="16" height="20" rx="3"/>
-    </g>
-  </svg>
-  <span class="wordmark">LiftOS</span>
-</div>
+      <div class="brand">
+        <svg class="logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true">
+          <defs>
+            <linearGradient id="lo-g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f59e0b" />
+              <stop offset="100%" stop-color="#38bdf8" />
+            </linearGradient>
+          </defs>
 
-      <nav class="nav">
+          <circle cx="128" cy="128" r="92" fill="none" stroke="url(#lo-g)" stroke-width="16" stroke-linecap="round" />
+          <circle cx="128" cy="128" r="58" fill="none" stroke="#1a222c" stroke-width="4" opacity=".9" />
+
+          <g stroke-linecap="round" stroke-linejoin="round">
+            <path d="M70 170 L140 100" stroke="#e8edf2" stroke-width="14" />
+            <path d="M140 100 L178 100 L178 138" fill="none" stroke="#38bdf8" stroke-width="14" />
+          </g>
+
+          <g fill="#0b0e12" opacity=".95">
+            <rect x="120" y="18" width="16" height="20" rx="3" />
+            <rect x="120" y="218" width="16" height="20" rx="3" />
+          </g>
+        </svg>
+
+        <span class="wordmark">LiftOS</span>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
         <button type="button" class="nav-btn active" data-tab="today">Today</button>
         <button type="button" class="nav-btn" data-tab="log">Log</button>
         <button type="button" class="nav-btn" data-tab="history">History</button>
         <button type="button" class="nav-btn" data-tab="tools">Tools</button>
         <button type="button" class="nav-btn" data-tab="settings">Settings</button>
       </nav>
+
       <div class="side-foot">© <span id="year"></span> — local-first</div>
     </aside>
 
     <main class="content">
       <!-- TODAY -->
-      <section id="today" class="panel show">
+      <section id="today" class="panel show" aria-labelledby="todayTitle">
         <header class="head">
+          <div>
+            <h1 id="todayTitle" class="panel-title">Today</h1>
+            <p id="todaySummary" class="muted compact">Choose a program day and start logging.</p>
+          </div>
+
           <div class="row">
-            <label class="field"><span>Program Day</span>
+            <label class="field">
+              <span>Program Day</span>
               <select id="daySelect"></select>
             </label>
-          </div>
-          <div class="row">
+
             <button type="button" id="startSession" class="btn">Start Session</button>
             <button type="button" id="clearToday" class="btn ghost danger">Clear Today</button>
           </div>
         </header>
+
+        <div id="sessionStats" class="stats-grid" aria-live="polite"></div>
+
         <div id="exerciseWrap" class="stack"></div>
+
         <p id="noProgram" class="muted hide">No program yet. Go to Settings → Program.</p>
       </section>
 
-      <section id="log" class="panel">
+      <!-- LOG -->
+      <section id="log" class="panel" aria-labelledby="logTitle">
         <header class="head">
+          <div>
+            <h2 id="logTitle" class="panel-title">Log</h2>
+            <p class="muted compact">Filter, review, delete mistakes, or export your workout data.</p>
+          </div>
+
           <div class="row">
-            <label class="field"><span>Exercise</span>
+            <label class="field">
+              <span>Exercise</span>
               <select id="filterLift"></select>
             </label>
-            <label class="field"><span>From</span><input id="fromDate" type="date" /></label>
-            <label class="field"><span>To</span><input id="toDate" type="date" /></label>
+
+            <label class="field">
+              <span>From</span>
+              <input id="fromDate" type="date" />
+            </label>
+
+            <label class="field">
+              <span>To</span>
+              <input id="toDate" type="date" />
+            </label>
           </div>
+
           <div class="row">
             <button type="button" id="applyFilters" class="btn ghost">Apply</button>
             <button type="button" id="clearFilters" class="btn ghost">Clear</button>
             <button type="button" id="exportCsv" class="btn">Export CSV</button>
           </div>
         </header>
+
         <div class="table-wrap">
           <table class="table">
-            <thead><tr><th>Date</th><th>Exercise</th><th>Weight</th><th>Reps</th><th>RPE</th><th>e1RM</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Exercise</th>
+                <th>Weight</th>
+                <th>Reps</th>
+                <th>RPE</th>
+                <th>e1RM</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
             <tbody id="logBody"></tbody>
           </table>
         </div>
       </section>
 
-      <section id="history" class="panel">
-        <h2 class="panel-title">Trends</h2>
+      <!-- HISTORY -->
+      <section id="history" class="panel" aria-labelledby="historyTitle">
+        <header class="section-head">
+          <h2 id="historyTitle" class="panel-title">History</h2>
+          <p class="muted compact">Track estimated strength trends and weekly volume.</p>
+        </header>
+
+        <div id="historySummary" class="stats-grid"></div>
+
+        <h3 class="panel-subtitle">Main Lift Trends</h3>
         <div id="trendWrap" class="stack"></div>
-        <h3 class="panel-subtitle">Weekly Volume (last 6 weeks)</h3>
+
+        <h3 class="panel-subtitle">Weekly Volume, Last 6 Weeks</h3>
         <div id="volumeBars" class="bars"></div>
       </section>
 
-      <section id="tools" class="panel">
+      <!-- TOOLS -->
+      <section id="tools" class="panel" aria-labelledby="toolsTitle">
+        <header class="section-head">
+          <h2 id="toolsTitle" class="panel-title">Tools</h2>
+          <p class="muted compact">Quick helpers for warm-ups, plate math, and 1RM estimates.</p>
+        </header>
+
         <div class="tools-grid">
           <div class="card">
             <h3>Warm-up Wizard</h3>
+
             <div class="grid-2">
-              <label class="field"><span>Target Set Weight</span><input id="wuTarget" type="number" inputmode="decimal" /></label>
-              <label class="field"><span>Top Set Reps</span><input id="wuReps" type="number" min="1" max="20" value="5" /></label>
+              <label class="field">
+                <span>Target Set Weight</span>
+                <input id="wuTarget" type="number" inputmode="decimal" min="0" step="0.5" />
+              </label>
+
+              <label class="field">
+                <span>Top Set Reps</span>
+                <input id="wuReps" type="number" min="1" max="20" value="5" />
+              </label>
             </div>
+
             <button type="button" id="makeWarmup" class="btn">Generate</button>
             <ul id="warmupList" class="list"></ul>
           </div>
 
           <div class="card">
             <h3>Plate Visualizer</h3>
+
             <div class="grid-2">
-              <label class="field"><span>Target Weight</span><input id="pvTarget" type="number" inputmode="decimal" /></label>
-              <label class="field"><span>Bar Weight</span><input id="pvBar" type="number" inputmode="decimal" /></label>
+              <label class="field">
+                <span>Target Weight</span>
+                <input id="pvTarget" type="number" inputmode="decimal" min="0" step="0.5" />
+              </label>
+
+              <label class="field">
+                <span>Bar Weight</span>
+                <input id="pvBar" type="number" inputmode="decimal" min="0" step="0.5" />
+              </label>
             </div>
+
             <button type="button" id="calcPlates" class="btn">Calculate</button>
             <div id="platesOut" class="plates"></div>
             <small class="muted">Uses your plate inventory in Settings.</small>
@@ -128,42 +201,98 @@
 
           <div class="card">
             <h3>1RM Calculator</h3>
+
             <div class="grid-2">
-              <label class="field"><span>Weight</span><input id="rmWeight" type="number" inputmode="decimal" /></label>
-              <label class="field"><span>Reps</span><input id="rmReps" type="number" min="1" max="20" /></label>
+              <label class="field">
+                <span>Weight</span>
+                <input id="rmWeight" type="number" inputmode="decimal" min="0" step="0.5" />
+              </label>
+
+              <label class="field">
+                <span>Reps</span>
+                <input id="rmReps" type="number" min="1" max="20" />
+              </label>
             </div>
+
             <button type="button" id="calcRm" class="btn">Estimate</button>
             <p id="rmOut" class="muted"></p>
           </div>
         </div>
       </section>
 
-      <section id="settings" class="panel">
-        <div class="grid-3">
+      <!-- SETTINGS -->
+      <section id="settings" class="panel" aria-labelledby="settingsTitle">
+        <header class="section-head">
+          <h2 id="settingsTitle" class="panel-title">Settings</h2>
+          <p class="muted compact">Customize units, rest times, plates, program, and backups.</p>
+        </header>
+
+        <div class="settings-grid">
           <div class="card">
             <h3>Units & Rest</h3>
-            <label class="field"><span>Units</span>
-              <select id="unitSel"><option value="kg">kg</option><option value="lb">lb</option></select>
+
+            <label class="field">
+              <span>Units</span>
+              <select id="unitSel">
+                <option value="kg">kg</option>
+                <option value="lb">lb</option>
+              </select>
             </label>
+
             <div class="grid-2">
-              <label class="field"><span>Main lift rest (sec)</span><input id="restMain" type="number" value="180" /></label>
-              <label class="field"><span>Accessory rest (sec)</span><input id="restAcc" type="number" value="90" /></label>
+              <label class="field">
+                <span>Main Lift Rest, Sec</span>
+                <input id="restMain" type="number" min="0" step="5" value="180" />
+              </label>
+
+              <label class="field">
+                <span>Accessory Rest, Sec</span>
+                <input id="restAcc" type="number" min="0" step="5" value="90" />
+              </label>
             </div>
+
             <button type="button" id="saveSettings" class="btn ghost">Save Settings</button>
           </div>
 
           <div class="card">
             <h3>Bar & Plates</h3>
-            <label class="field"><span>Bar Weight</span><input id="barWeight" type="number" /></label>
-            <label class="field"><span>Available Plates (per side)</span></label>
+
+            <label class="field">
+              <span>Bar Weight</span>
+              <input id="barWeight" type="number" min="0" step="0.5" />
+            </label>
+
+            <label class="field">
+              <span>Available Plates, Per Side</span>
+            </label>
+
             <div id="plateChecks" class="chips"></div>
+
             <button type="button" id="savePlates" class="btn ghost">Save Bar & Plates</button>
           </div>
 
           <div class="card">
+            <h3>Backup</h3>
+            <p class="muted">Export or import your full local LiftOS data.</p>
+
+            <div class="backup-actions">
+              <button type="button" id="exportBackup" class="btn ghost">Export Backup</button>
+
+              <label class="btn ghost file-btn">
+                Import Backup
+                <input id="importBackup" type="file" accept="application/json,.json" />
+              </label>
+            </div>
+
+            <p class="muted small">CSV export is for spreadsheets. Backup export saves settings, program, sets, and PRs.</p>
+          </div>
+
+          <div class="card program-card">
             <h3>Program</h3>
-            <p class="muted">Edit as JSON. A starter template loads automatically.</p>
-            <textarea id="programJson" class="program"></textarea>
+            <p class="muted">Edit your program as JSON. Starter template includes Push, Pull, Legs, Upper, and Lower.</p>
+
+            <textarea id="programJson" class="program" spellcheck="false"></textarea>
+
             <div class="right">
               <button type="button" id="saveProgram" class="btn">Save Program</button>
               <button type="button" id="resetProgram" class="btn ghost danger">Reset to Starter</button>
@@ -174,10 +303,12 @@
     </main>
   </div>
 
-  <div id="restDrawer" class="rest">
+  <!-- REST TIMER DRAWER -->
+  <div id="restDrawer" class="rest" aria-live="polite">
     <div class="rest-inner">
       <strong>Rest</strong>
       <span id="restTime">00:00</span>
+
       <div class="rest-actions">
         <button type="button" id="add15" class="btn ghost">+15s</button>
         <button type="button" id="add30" class="btn ghost">+30s</button>
