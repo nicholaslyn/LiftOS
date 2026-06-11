@@ -259,7 +259,6 @@
         updateLastSet(card, row.exercise);
         renderTodayStats();
 
-        startRest(row.type === "main" ? settings.rest.main : settings.rest.accessory);
       });
     }
   }
