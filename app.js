@@ -1216,33 +1216,50 @@
   }
 
   function confetti(anchor) {
-    if (!anchor) return;
 
-    const box = anchor.getBoundingClientRect();
+  if (!anchor) return;
 
-    for (let i = 0; i < 12; i++) {
-      const s = document.createElement("span");
+  const box = anchor.getBoundingClientRect();
 
-      s.textContent = "✦";
-      s.style.position = "fixed";
-      s.style.left = `${box.left + box.width / 2}px`;
-      s.style.top = `${box.top + 6}px`;
-      s.style.fontSize = "12px";
-      s.style.color = i % 2 ? "#f59e0b" : "#38bdf8";
-      s.style.pointerEvents = "none";
-      s.style.transition = "transform .7s ease, opacity .7s ease";
-      s.style.zIndex = "999";
+  for (let i = 0; i < 12; i++) {
 
-      document.body.appendChild(s);
+    const s = document.createElement("span");
 
-      requestAnimationFrame(() => {
-        const dx = (Math.random() * 2 - 1) * 80;
-        const dy = 60 + Math.random() * 40;
-        s.style.transform = `translate(${dx}px, ${-dy}px) rotate(${Math.random() * 180}deg)`;
-        s.style.opacity = "0";
-      });
+    s.textContent = "✦";
 
-      setTimeout(() => s.remove(), 800);
-    }
+    s.style.position = "fixed";
+
+    s.style.left = `${box.left + box.width / 2}px`;
+
+    s.style.top = `${box.top + 6}px`;
+
+    s.style.fontSize = "12px";
+
+    s.style.color = i % 2 ? "#f59e0b" : "#38bdf8";
+
+    s.style.pointerEvents = "none";
+
+    s.style.transition = "transform .7s ease, opacity .7s ease";
+
+    s.style.zIndex = "999";
+
+    document.body.appendChild(s);
+
+    requestAnimationFrame(() => {
+
+      const dx = (Math.random() * 2 - 1) * 80;
+
+      const dy = 60 + Math.random() * 40;
+
+      s.style.transform = `translate(${dx}px, ${-dy}px) rotate(${Math.random() * 180}deg)`;
+
+      s.style.opacity = "0";
+
+    });
+
+    setTimeout(() => s.remove(), 800);
+
   }
+
+}
 })();
