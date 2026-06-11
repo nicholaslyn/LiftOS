@@ -1026,3 +1026,273 @@ textarea.program{
     grid-template-columns:1fr;
   }
 }
+/* --- Professional spacing + subtle rest timer polish --- */
+
+.content{
+  padding:24px;
+}
+
+.panel{
+  padding:22px;
+  margin:18px 0;
+}
+
+.card,
+.ex,
+.program-day{
+  padding:18px;
+}
+
+.stack{
+  gap:16px;
+}
+
+.tools-grid,
+.settings-grid{
+  gap:16px;
+}
+
+.grid-2{
+  gap:14px;
+}
+
+.head{
+  margin-bottom:18px;
+}
+
+.row{
+  gap:12px;
+}
+
+input,
+select,
+textarea{
+  min-height:44px;
+}
+
+.btn{
+  min-height:44px;
+}
+
+/* Make Today workout cards feel cleaner */
+.ex{
+  border-radius:18px;
+}
+
+.ex header{
+  margin-bottom:12px;
+}
+
+.sets{
+  margin-top:14px;
+}
+
+.set-row{
+  gap:12px;
+}
+
+.set-list{
+  margin-top:14px;
+  padding-top:12px;
+}
+
+.set-list li{
+  padding:8px 0;
+  color:var(--muted);
+}
+
+/* Subtle floating rest timer instead of huge drawer */
+.rest{
+  left:auto;
+  right:18px;
+  bottom:18px;
+  width:auto;
+  max-width:360px;
+  padding:0;
+  transform:translateY(120%);
+  transition:transform .22s ease, opacity .22s ease;
+  opacity:0;
+  z-index:80;
+}
+
+.rest.show{
+  transform:translateY(0);
+  opacity:1;
+}
+
+.rest-inner{
+  width:auto;
+  max-width:360px;
+  margin:0;
+  border:1px solid rgba(56,189,248,.25);
+  border-radius:999px;
+  padding:8px 10px 8px 14px;
+  background:rgba(10,14,18,.94);
+  backdrop-filter:blur(12px);
+  box-shadow:0 14px 34px rgba(0,0,0,.35);
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:10px;
+}
+
+.rest-inner strong{
+  font-size:.85rem;
+  color:var(--muted);
+}
+
+#restTime{
+  font-size:1rem;
+  min-width:48px;
+  text-align:center;
+}
+
+.rest-actions{
+  display:flex;
+  gap:6px;
+}
+
+.rest-actions .btn{
+  width:auto;
+  min-height:32px;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:.8rem;
+}
+
+/* Make the stop button less huge but still clear */
+.rest-actions #stopRest{
+  color:#ff7777;
+}
+
+/* Cleaner mobile layout */
+@media (max-width:780px){
+  .content{
+    padding:14px;
+  }
+
+  .panel{
+    padding:16px;
+    margin:12px 0;
+    border-radius:18px;
+  }
+
+  .card,
+  .ex,
+  .program-day{
+    padding:16px;
+    border-radius:18px;
+  }
+
+  .head{
+    gap:16px;
+    margin-bottom:16px;
+  }
+
+  .row{
+    gap:12px;
+  }
+
+  .nav-btn{
+    padding:9px 12px;
+    border-radius:999px;
+  }
+
+  .set-row{
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    grid-template-areas:
+      "weight reps"
+      "rpe chip"
+      "btn btn";
+  }
+
+  .set-row .chip{
+    min-height:44px;
+    padding:10px 12px;
+    border-radius:12px;
+  }
+
+  .set-row .save-set{
+    margin-top:2px;
+  }
+
+  .last-set{
+    font-size:.85rem;
+  }
+
+  .badges{
+    gap:6px;
+  }
+
+  .badge{
+    font-size:.78rem;
+    padding:2px 8px;
+  }
+
+  /* mobile rest timer: small bottom floating pill */
+  .rest{
+    left:12px;
+    right:12px;
+    bottom:12px;
+    max-width:none;
+  }
+
+  .rest-inner{
+    max-width:none;
+    width:100%;
+    border-radius:18px;
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    gap:8px;
+    padding:10px;
+  }
+
+  #restTime{
+    font-size:1.05rem;
+  }
+
+  .rest-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:6px;
+  }
+
+  .rest-actions .btn{
+    width:auto;
+    min-height:34px;
+    padding:5px 8px;
+    font-size:.78rem;
+  }
+}
+
+@media (max-width:420px){
+  .content{
+    padding:10px;
+  }
+
+  .panel{
+    padding:14px;
+  }
+
+  .set-row{
+    grid-template-columns:1fr 1fr;
+    grid-template-areas:
+      "weight reps"
+      "rpe chip"
+      "btn btn";
+  }
+
+  .rest-inner{
+    grid-template-columns:1fr;
+    text-align:center;
+  }
+
+  .rest-actions{
+    justify-content:center;
+  }
+
+  .rest-actions .btn{
+    flex:0 0 auto;
+  }
+}
