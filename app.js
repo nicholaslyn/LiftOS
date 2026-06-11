@@ -827,9 +827,534 @@
 
     const matched = Math.abs(remain) < 0.01;
 
-    const html = `
+        const html = `
       <div class="line">
         <span class="plate small">Bar ${round2(barWeight)}${esc(settings.unit)}</span>
         ${used.map(item => `<span class="plate">${round2(item.plate)}${esc(settings.unit)} × ${item.count} / side</span>`).join("")}
         ${matched ? "" : `<span class="muted">(≈ off by ${round2(remain)}${esc(settings.unit)} per side)</span>`}
-      </
+      </div>
+    `;
+
+    return { html };
+  }
+
+  function roundToPlateable(value){
+    return settings.unit === "kg" ? Math.round(value * 2) / 2 : Math.round(value);
+  }
+
+  function renderSettings(){
+    if (unitSel) unitSel.value = settings.unit;
+    if (restMain) restMain.value = settings.rest.main;
+    if (restAcc) restAcc.value = settings.rest.accessory;
+    if (barWeight) barWeight.value = settings.bar;
+
+    if (plateChecks) {
+      const defaultPlates = settings.unit === "kg"
+        ? [25, 20, 15, 10, 5, 2.5, 1.25]
+        : [45, 35, 25, 10, 5, 2.5];
+
+      plateChecks.innerHTML = defaultPlates.map(plate => {
+        const checked = settings.plates.includes(plate);
+
+        return `
+          <label class="chip">
+            <input type="checkbox" value="${plate}" ${checked ? "checked" : ""}/>
+            ${plate}${esc(settings.unit)}
+          </label>
+        `;
+      }).join("");
+    }
+
+    renderProgramEditor();
+
+    if (programJson) {
+      programJson.value = JSON.stringify(program, null, 2);
+    }
+  }
+
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener("click", () => {
+      settings.unit = unitSel.value;
+      settings.rest.main = Math.max(0, +restMain.value || 180);
+      settings.rest.accessory = Math.max(0, +restAcc.value || 90);
+
+      save(KEY_SETTINGS, settings);
+      alert("Settings saved.");
+
+      startSession();
+      renderSettings();
+      renderTodayStats();
+    });
+  }
+
+  if (savePlatesBtn) {
+    savePlatesBtn.addEventListener("click", () => {
+      settings.bar = Math.max(0, +barWeight.value || settings.bar);
+
+      const selected = Array.from(plateChecks.querySelectorAll("input[type=checkbox]:checked"))
+        .map(input => +input.value)
+        .sort((a, b) => b - a);
+
+      settings.plates = selected.length ? selected : settings.plates;
+
+      save(KEY_SETTINGS, settings);
+      alert("Bar & plates saved.");
+
+      renderSettings();
+    });
+  }
+
+  function injectProgramEditorIfMissing(){
+    if (!programJson) return;
+
+    const card = programJson.closest(".card");
+    if (!card) return;
+
+    if (!$("#programEditor")) {
+      const wrapper = document.createElement("div");
+
+      wrapper.innerHTML = `
+        <div id="programEditor" class="program-editor"></div>
+
+        <div class="program-actions">
+          <button type="button" id="addDay" class="btn ghost">Add Day</button>
+          <button type="button" id="saveProgramVisual" class="btn">Save Visual Program</button>
+        </div>
+
+        <details class="advanced-program" open>
+          <summary>Advanced JSON editor</summary>
+        </details>
+      `;
+
+      const editor = wrapper.querySelector("#programEditor");
+      const actions = wrapper.querySelector(".program-actions");
+      const details = wrapper.querySelector(".advanced-program");
+
+      card.insertBefore(editor, programJson);
+      card.insertBefore(actions, programJson);
+
+      details.appendChild(programJson);
+
+      const existingRight = card.querySelector(".right");
+      if (existingRight) details.appendChild(existingRight);
+
+      card.appendChild(details);
+    }
+
+    programEditor = $("#programEditor");
+    addDayBtn = $("#addDay");
+    saveProgramVisualBtn = $("#saveProgramVisual");
+  }
+
+  function renderProgramEditor(){
+    if (!programEditor) return;
+
+    if (!program?.days) program = { days: [] };
+
+    programEditor.innerHTML = program.days.map((day, dayIndex) => `
+      <div class="program-day" data-day-index="${dayIndex}">
+        <div class="program-day-head">
+          <label class="field program-day-name">
+            <span>Day Name</span>
+            <input class="program-day-input" value="${escAttr(day.name)}" />
+          </label>
+
+          <button type="button" class="btn ghost danger remove-day">Delete Day</button>
+        </div>
+
+        <div class="program-exercises">
+          ${(day.exercises || []).map((exercise, exerciseIndex) => `
+            <div class="program-exercise" data-ex-index="${exerciseIndex}">
+              <input class="program-ex-name" value="${escAttr(exercise.name)}" placeholder="Exercise name" />
+
+              <select class="program-ex-type">
+                <option value="main" ${exercise.type === "main" ? "selected" : ""}>Main</option>
+                <option value="accessory" ${exercise.type === "accessory" ? "selected" : ""}>Accessory</option>
+              </select>
+
+              <button type="button" class="btn ghost danger remove-exercise">Remove</button>
+            </div>
+          `).join("")}
+        </div>
+
+        <button type="button" class="btn ghost add-exercise">Add Exercise</button>
+      </div>
+    `).join("") || `<p class="muted">No days yet. Add a day to start building your program.</p>`;
+  }
+
+  function syncProgramFromEditor(){
+    const next = { days: [] };
+
+    $$(".program-day").forEach(dayEl => {
+      const name = dayEl.querySelector(".program-day-input").value.trim();
+      if (!name) return;
+
+      const exercises = [];
+
+      dayEl.querySelectorAll(".program-exercise").forEach(exEl => {
+        const exName = exEl.querySelector(".program-ex-name").value.trim();
+        const type = exEl.querySelector(".program-ex-type").value;
+
+        if (!exName) return;
+
+        exercises.push({
+          name: exName,
+          type: type === "main" ? "main" : "accessory"
+        });
+      });
+
+      next.days.push({ name, exercises });
+    });
+
+    program = sanitizeProgram(next) || { days: [] };
+
+    save(KEY_PROGRAM, program);
+    populateDays();
+    startSession();
+
+    if (programJson) {
+      programJson.value = JSON.stringify(program, null, 2);
+    }
+  }
+
+  if (programEditor) {
+    programEditor.addEventListener("click", event => {
+      const dayEl = event.target.closest(".program-day");
+      if (!dayEl) return;
+
+      const dayIndex = +dayEl.dataset.dayIndex;
+
+      if (event.target.closest(".add-exercise")) {
+        syncProgramFromEditor();
+
+        program.days[dayIndex].exercises.push({
+          name: "New Exercise",
+          type: "accessory"
+        });
+
+        renderProgramEditor();
+        return;
+      }
+
+      if (event.target.closest(".remove-exercise")) {
+        syncProgramFromEditor();
+
+        const exEl = event.target.closest(".program-exercise");
+        const exIndex = +exEl.dataset.exIndex;
+
+        program.days[dayIndex].exercises.splice(exIndex, 1);
+        renderProgramEditor();
+        return;
+      }
+
+      if (event.target.closest(".remove-day")) {
+        if (!confirm("Delete this day and all its exercises?")) return;
+
+        syncProgramFromEditor();
+        program.days.splice(dayIndex, 1);
+        renderProgramEditor();
+      }
+    });
+  }
+
+  if (addDayBtn) {
+    addDayBtn.addEventListener("click", () => {
+      syncProgramFromEditor();
+
+      program.days.push({
+        name: "New Day",
+        exercises: [
+          { name: "New Exercise", type: "main" }
+        ]
+      });
+
+      renderProgramEditor();
+    });
+  }
+
+  if (saveProgramVisualBtn) {
+    saveProgramVisualBtn.addEventListener("click", () => {
+      syncProgramFromEditor();
+      alert("Program saved.");
+    });
+  }
+
+  if (saveProgramBtn) {
+    saveProgramBtn.addEventListener("click", () => {
+      try {
+        const parsed = JSON.parse(programJson.value);
+        const clean = sanitizeProgram(parsed);
+
+        if (!clean) {
+          throw new Error("Program must have a days array.");
+        }
+
+        program = clean;
+        save(KEY_PROGRAM, program);
+
+        populateDays();
+        startSession();
+        renderSettings();
+
+        alert("Program saved.");
+      } catch (error) {
+        alert("Invalid JSON: " + error.message);
+      }
+    });
+  }
+
+  if (resetProgramBtn) {
+    resetProgramBtn.addEventListener("click", () => {
+      if (!confirm("Reset to starter program? This will replace your current program.")) return;
+
+      program = clone(STARTER_PROGRAM);
+      save(KEY_PROGRAM, program);
+
+      populateDays();
+      startSession();
+      renderSettings();
+
+      alert("Reset.");
+    });
+  }
+
+  if (exportBackupBtn) {
+    exportBackupBtn.addEventListener("click", () => {
+      const backup = {
+        app: "LiftOS",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        settings,
+        program,
+        sets,
+        bests
+      };
+
+      download(JSON.stringify(backup, null, 2), "liftos-backup.json", "application/json");
+    });
+  }
+
+  if (importBackupInput) {
+    importBackupInput.addEventListener("change", async event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        if (!confirm("Import this backup? This will replace your current LiftOS data.")) {
+          importBackupInput.value = "";
+          return;
+        }
+
+        const importedSettings = mergeSettings(DEFAULT_SETTINGS, data.settings);
+        const importedProgram = sanitizeProgram(data.program);
+        const importedSets = Array.isArray(data.sets) ? data.sets : [];
+        const importedBests = data.bests && typeof data.bests === "object" ? data.bests : {};
+
+        if (!importedProgram) {
+          throw new Error("Backup is missing a valid program.");
+        }
+
+        settings = importedSettings;
+        program = importedProgram;
+        sets = importedSets;
+        bests = importedBests;
+
+        save(KEY_SETTINGS, settings);
+        save(KEY_PROGRAM, program);
+        save(KEY_SETS, sets);
+        save(KEY_BESTS, bests);
+
+        recalcBests();
+        populateDays();
+        startSession();
+        renderSettings();
+        renderTodayStats();
+
+        alert("Backup imported.");
+      } catch (error) {
+        alert("Could not import backup: " + error.message);
+      } finally {
+        importBackupInput.value = "";
+      }
+    });
+  }
+
+  function lastSetForExercise(exercise){
+    return sets
+      .filter(set => set.exercise === exercise)
+      .sort((a, b) => b.dateISO.localeCompare(a.dateISO))[0] || null;
+  }
+
+  function sanitizeProgram(value){
+    if (!value || !Array.isArray(value.days)) return null;
+
+    const days = value.days
+      .map(day => {
+        const name = String(day.name || "").trim();
+        const exercises = Array.isArray(day.exercises) ? day.exercises : [];
+
+        return {
+          name,
+          exercises: exercises
+            .map(exercise => ({
+              name: String(exercise.name || "").trim(),
+              type: exercise.type === "main" ? "main" : "accessory"
+            }))
+            .filter(exercise => exercise.name)
+        };
+      })
+      .filter(day => day.name);
+
+    return { days };
+  }
+
+  function mergeSettings(defaults, incoming){
+    const safe = incoming && typeof incoming === "object" ? incoming : {};
+
+    return {
+      unit: safe.unit === "lb" ? "lb" : "kg",
+      rest: {
+        main: Number.isFinite(+safe.rest?.main) ? +safe.rest.main : defaults.rest.main,
+        accessory: Number.isFinite(+safe.rest?.accessory) ? +safe.rest.accessory : defaults.rest.accessory
+      },
+      bar: Number.isFinite(+safe.bar) ? +safe.bar : defaults.bar,
+      plates: Array.isArray(safe.plates) && safe.plates.length
+        ? safe.plates.map(Number).filter(Number.isFinite).sort((a, b) => b - a)
+        : [...defaults.plates]
+    };
+  }
+
+  function load(key){
+    try {
+      return JSON.parse(localStorage.getItem(key) || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function save(key, value){
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function clone(value){
+    if (window.structuredClone) return structuredClone(value);
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function esc(value){
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function escAttr(value){
+    return esc(value).replace(/'/g, "&#039;");
+  }
+
+  function csvCell(value){
+    return `"${String(value).replace(/"/g, '""')}"`;
+  }
+
+  function download(text, name, type = "text/plain"){
+    const blob = new Blob([text], { type });
+    const anchor = document.createElement("a");
+
+    anchor.href = URL.createObjectURL(blob);
+    anchor.download = name;
+    anchor.click();
+
+    URL.revokeObjectURL(anchor.href);
+  }
+
+  function fmtDateTime(iso){
+    const date = new Date(iso);
+
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "2-digit"
+    }) + " " + date.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function fmtDateShort(iso){
+    const date = new Date(iso);
+
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "2-digit"
+    });
+  }
+
+  function fmtMMSS(ms){
+    const seconds = Math.round(ms / 1000);
+    const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const remainingSeconds = String(seconds % 60).padStart(2, "0");
+
+    return `${minutes}:${remainingSeconds}`;
+  }
+
+  function round1(value){
+    return Math.round(value * 10) / 10;
+  }
+
+  function round2(value){
+    return Math.round(value * 100) / 100;
+  }
+
+  function weekLabel(date){
+    const year = date.getFullYear();
+    const first = new Date(year, 0, 1);
+    const days = Math.floor((date - first) / 86400000);
+    const week = Math.ceil((days + first.getDay() + 1) / 7);
+
+    return `${year}-W${String(week).padStart(2, "0")}`;
+  }
+
+  function confetti(anchor){
+    if (!anchor) return;
+
+    const box = anchor.getBoundingClientRect();
+
+    for (let index = 0; index < 12; index++) {
+      const sparkle = document.createElement("span");
+
+      sparkle.textContent = "✦";
+      sparkle.style.position = "fixed";
+      sparkle.style.left = `${box.left + box.width / 2}px`;
+      sparkle.style.top = `${box.top + 6}px`;
+      sparkle.style.fontSize = "12px";
+      sparkle.style.color = index % 2 ? "#f59e0b" : "#38bdf8";
+      sparkle.style.pointerEvents = "none";
+      sparkle.style.transition = "transform .7s ease, opacity .7s ease";
+      sparkle.style.zIndex = "999";
+
+      document.body.appendChild(sparkle);
+
+      requestAnimationFrame(() => {
+        const dx = (Math.random() * 2 - 1) * 80;
+        const dy = 60 + Math.random() * 40;
+
+        sparkle.style.transform = `translate(${dx}px, ${-dy}px) rotate(${Math.random() * 180}deg)`;
+        sparkle.style.opacity = "0";
+      });
+
+      setTimeout(() => sparkle.remove(), 800);
+    }
+  }
+
+  populateDays();
+  startSession();
+  renderSettings();
+  renderTodayStats();
+  recalcBests();
+
+  const todayPanel = $("#today");
+  if (todayPanel) todayPanel.classList.add("show");
+})();
